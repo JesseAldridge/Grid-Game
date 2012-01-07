@@ -1,0 +1,72 @@
+﻿
+<div id='main' style='font-family:Monaco'>
+</div>
+
+<script src='jquery-1.7.1.min.js'></script>
+<script>
+
+// Utilities
+
+function clamp(o, attr, max_) {
+    if(o[attr] < 0)  o[attr] = 0
+    if(o[attr] > max_)  o[attr] = max_
+}
+
+// Initial objects
+
+var player = {r:0, c:0, ch:'@', tick:function(){}}
+var rabbit = {r:5, c:10, ch:'r', tick:function(){}}
+var object_list = [player, rabbit]
+var tiles = []
+for(r = 0; r < 10; r++) {
+    tiles.push([])
+    for(c = 0; c < 30; c++)
+        tiles[tiles.length - 1].push({})
+}
+
+// Actions
+
+function move(o, dir) {
+    // Move in the passed direction.  Don't go out of bounds.
+    var dirs = [[0, -1], [-1, 0], [0, 1], [1, 0],]
+    o.r += dirs[dir][0]
+    o.c += dirs[dir][1]
+    clamp(o, 'c', tiles[0].length - 1)
+    clamp(o, 'r', tiles.length - 1)
+}
+
+// Player input
+$(document).keydown(function(e) {
+    var k = e.keyCode
+    if(k >= 37 && k <= 40)  move(player, k - 37)
+
+    // Tick
+    for(var i = 0; i < object_list.length; i++)
+        object_list[i].tick()
+
+    render_grid()
+})
+
+function render_grid() {
+    // Make object lookup table indexed by position.
+    var render_str = ''
+    var object_map = {}
+    for(var i = 0; i < object_list.length; i++) {
+        o = object_list[i]
+        object_map['' + o.r + o.c] = object_list[i]
+    }
+
+    // Render tiles or object if object on tile.
+    for(var r = 0; r < tiles.length; r++) {
+        for(var c = 0; c < tiles[0].length; c++) {
+            o = object_map['' + r + c]
+            if(o)  render_str += o.ch
+            else  render_str += '.'
+        }
+        render_str += '<br/>'
+    }
+
+    $('#main').html(render_str)
+}
+render_grid()
+</script>
