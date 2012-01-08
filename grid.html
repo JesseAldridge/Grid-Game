@@ -12,15 +12,61 @@ function clamp(o, attr, max_) {
     if(o[attr] > max_)  o[attr] = max_
 }
 
+function dist(a, b) {
+    return Math.pow((a.r - b.r), 2) + Math.pow((a.c - b.c), 2)
+}
+
+var west = 0, north = 1, east = 2, south = 3,
+    num_rows = 10, num_cols = 30
+
 // Initial objects
+// ================
 
 var player = {r:0, c:0, ch:'@', tick:function(){}}
-var rabbit = {r:5, c:10, ch:'r', tick:function(){}}
+
+var rabbit = {r:5, c:10, ch:'r', tick:function(){
+    // Find nearest plant
+    var near_plant, near_dist;
+    for(var i = 0; i < object_list.length; i++) {
+        obj = object_list[i]
+        if(obj.is_plant) {
+            curr_dist = dist(this, obj)
+            if(near_plant == undefined || curr_dist < near_dist) {
+                near_dist = curr_dist
+                near_plant = obj
+            }
+        }
+    }
+
+    // Move toward nearest plant.
+    if(near_plant) {
+        near_plant.color = 'ff0000'
+        var r = this.r, c = this.c
+        if(near_plant.r < r)  move(this, north)
+        else if(near_plant.r > r)  move(this, south)
+        else if(near_plant.c < c)  move(this, west)
+        else if(near_plant.c > c)  move(this, east)
+    }
+}}
+
+// Randomly place a few plants.
+function Plant() {
+    this.r = Math.floor(Math.random() * num_rows)
+    this.c = Math.floor(Math.random() * num_cols)
+    this.is_plant = true
+    this.ch = '*'
+    this.tick = function(){}
+}
+
 var object_list = [player, rabbit]
+
+for(var i = 0; i < 5; i++)
+    object_list.push(new Plant())
+
 var tiles = []
-for(r = 0; r < 10; r++) {
+for(r = 0; r < num_rows; r++) {
     tiles.push([])
-    for(c = 0; c < 30; c++)
+    for(c = 0; c < num_cols; c++)
         tiles[tiles.length - 1].push({})
 }
 
@@ -60,7 +106,13 @@ function render_grid() {
     for(var r = 0; r < tiles.length; r++) {
         for(var c = 0; c < tiles[0].length; c++) {
             o = object_map['' + r + c]
-            if(o)  render_str += o.ch
+            if(o) {
+                o_str = '<span style="color:#%color">%ch</span>'
+                var color = o.color
+                if(!color)  color = '000000'
+                o_str = o_str.replace('%color', color).replace('%ch', o.ch)
+                render_str += o_str
+            }
             else  render_str += '.'
         }
         render_str += '<br/>'
